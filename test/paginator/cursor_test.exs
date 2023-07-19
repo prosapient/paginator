@@ -3,6 +3,33 @@ defmodule Paginator.CursorTest do
 
   alias Paginator.Cursor
 
+  defmodule MYTEST1 do
+    defstruct id: nil
+  end
+
+  defmodule MYTEST2 do
+    defstruct id: nil
+  end
+
+  defimpl Paginator.Cursor.Encode, for: MYTEST1 do
+    def convert(term), do: {:m1, term.id}
+  end
+
+  defimpl Paginator.Cursor.Decode, for: Tuple do
+    def convert({:m1, id}), do: %MYTEST1{id: id}
+  end
+
+  test "cursor for struct with custom implementation is shorter" do
+    cursor1 = Cursor.encode(%{v1: %MYTEST1{id: 1}})
+
+    assert Cursor.decode(cursor1) == %{v1: %MYTEST1{id: 1}}
+
+    cursor2 = Cursor.encode(%{v1: %MYTEST2{id: 1}})
+
+    assert Cursor.decode(cursor2) == %{v1: %MYTEST2{id: 1}}
+    assert bit_size(cursor1) < bit_size(cursor2)
+  end
+
   describe "encoding and decoding terms" do
     test "it encodes and decodes map cursors" do
       cursor = Cursor.encode(%{a: 1, b: 2})
